@@ -94,7 +94,7 @@ class Order(models.Model):
         return f"{self.confirmation_number} - {self.user.username} - {self.get_payment_method_display()}"
 
 #=================================================
-# ElectronicTicket Model (Actual purchased ticket)
+# ElectronicTicket Model, actual purchased ticket
 #=================================================
 class ElectronicTicket(models.Model):
 
@@ -141,6 +141,64 @@ class ElectronicTicket(models.Model):
     def __str__(self):
         return f"{self.ticket_number} ({self.get_lottery_type_display()})"
 
+#=============================================
+# Notification Model
+# Stores messages sent to users
+#=============================================
+class Notification(models.Model):
+    
+    # Help categorize notifications
+    class NotificationType(models.TextChoices):
+
+        PURCHASE = "purchase", "Purchase Confirmation"
+        DRAW_RESULT = "draw_result", "Draw Result"
+        WINNER = "winner", "Winner"
+        GENERAL = "general", "General"
+
+    # Unique ID for each notification
+    notification_id = models.UUIDField(primary_key = True, default = uuid.uuid4, editable = False)
+
+    # User who receives the notification
+    recipient = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "notifications")
+    
+    # Their associated order, related to their purchase
+    order = models.ForeignKey(Order, on_delete = models.CASCADE, related_name = "notifications", null = True, blank = True)
+    
+    # Their associated draw, related to lottery results
+    draw = models.ForeignKey("LotteryDraw", on_delete = models.CASCADE, related_name = "notifications", null = True, blank = True)
+    
+    # Email of the recipient
+    recipient_email = models.EmailField()
+    
+    # Main message content shown to the user
+    message = models.TextField()
+   
+    # Timestamp was created and sent
+    date_sent = models.DateTimeField(auto_now_add = True)
+    
+    # Type or category of the notification
+    notification_type = models.CharField(max_length = 20, choices = NotificationType.choices, default = NotificationType.GENERAL)
+    
+    # Shows whether the user read the notification
+    is_read = models.BooleanField(default = False)
+
+    # Returns the notification message
+    def create_message(self):
+        return self.message
+        
+    def log_notification(self):
+        return f"Notification sent to {self.recipient_email}"
+        
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
+    def send_email(self):
+        pass
+
+    def __str__(self):
+        return f"{self.notification_type} - {self.recipient.username}"
+        
 #=================================
 # LotteryDraw Model (Weekly Draw)
 #=================================
@@ -246,8 +304,16 @@ class LotteryDraw(models.Model):
         self.draw_status = self.DrawStatus.PUBLISHED
         self.save()
 
+        for ticket in self.tickets.all():
+            if ticket.winner:
+                message = f"Congratulations! Ticket {ticket.ticket_number} won ${ticket.calculated_prize}."
+                notification_type = Notification.NotificationType.WINNER
+            else:
+                message = f"Results are published. Ticket {ticket.ticket_number} did not win."
+                notification_type = Notification.NotificationType.DRAW_RESULT
+            
+            Notification.objects.create(recipient = ticket.transaction.user, order = ticket.transaction, draw = self, recipient_email = ticket.transaction.user.email, message = message, notification_type = notification_type)
     # String representation of the draw for admin display
     def __str__(self):
         return f"{self.game.get_game_type_display()} Draw {self.draw_id} - {self.draw_date}"
 
-    
