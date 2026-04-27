@@ -89,7 +89,7 @@ def purchase_tickets(request):
     if not payment_method:                          #validate payment method
         return Response({'error': 'Please input payment method'}, status=status.HTTP_400_BAD_REQUEST)
     
-    if not tickets or len(tickets)>10:
+    if not tickets or len(tickets)>10:              #validate ticket/ ticket count
         return Response({'error': 'Maximum 10 tickets allowed per purchase'}, status=status.HTTP_400_BAD_REQUEST)
     
     order = Order.objects.create(user=request.user, payment_method=payment_method)  #create order
