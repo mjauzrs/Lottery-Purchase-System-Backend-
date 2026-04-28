@@ -159,13 +159,13 @@ def winning_numbers(request):
 @permission_classes([IsAuthenticated])
 
 def admin_view(request):
-    if not request.user.is_staff:
+    if not request.user.is_staff:                   #check if the logged in user has admin permissions
         return Response({'error': 'Admin access only.'}, status=status.HTTP_403_FORBIDDEN)
 
-    total_tickets_sold= ElectronicTicket.objects.count()
+    total_tickets_sold= ElectronicTicket.objects.count()   #counts total tickets sold    
     total_revenue=0
 
-    for game in LotteryTicket.objects.all():
+    for game in LotteryTicket.objects.all():                #loop to determine count per ticket type and total price per group of tickets
         count= ElectronicTicket.objects.filter(lottery_type=game.game_type).count()
         total_revenue+= count*game.ticket_price
     
