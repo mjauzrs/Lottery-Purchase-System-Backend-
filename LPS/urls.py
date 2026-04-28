@@ -19,4 +19,5 @@ urlpatterns = [
     path('api/admin-update-ticket/', views.admin_update_ticket, name='admin-update-ticket'),
     path('api/admin-run-draw/', views.admin_run_draw, name='admin-run-draw'),
     path('api/admin-publish-draw/', views.admin_publish_draw, name='admin-publish-draw'),
+    path('api/profile-page-view/', views.profile_page_view, name='profile-page-view'),
 ]

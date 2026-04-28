@@ -268,3 +268,29 @@ def admin_publish_draw(request):
     draw.publish_results()                          #call publish_results() from models.py
 
     return Response({'message': 'Draw results published!'}, status=status.HTTP_200_OK)
+
+#==================================================
+# Profile View
+# Accepts GET request from logged in user
+# Returns profile page
+#==================================================
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+
+def profile_page_view(request):
+    first_name= request.user.first_name
+    last_name= request.user.last_name
+    username= request.user.username
+    email= request.user.email
+
+    home_add= request.user.customerprofile.home_address
+    phone_no= request.user.customerprofile.phone_number
+
+    return Response({
+        'username': username,
+        'first_name': first_name,
+        'last_name': last_name,
+        'email': email,
+        'home_address': home_add,
+        'phone_number': phone_no,
+    })
