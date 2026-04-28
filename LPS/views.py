@@ -149,3 +149,27 @@ def winning_numbers(request):
     ]
 
     return Response(data)
+
+#==================================================
+# Admin View
+# Accepts GET request from verified admin
+# Returns total tickets sold and total revenue
+#==================================================
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+
+def admin_view(request):
+    if not request.user.is_staff:
+        return Response({'error': 'Admin access only.'}, status=status.HTTP_403_FORBIDDEN)
+
+    total_tickets_sold= ElectronicTicket.objects.count()
+    total_revenue=0
+
+    for game in LotteryTicket.objects.all():
+        count= ElectronicTicket.objects.filter(lottery_type=game.game_type).count()
+        total_revenue+= count*game.ticket_price
+    
+    return Response({
+        'total_tickets_sold': total_tickets_sold,
+        'total_revenue': str(total_revenue)})
+
