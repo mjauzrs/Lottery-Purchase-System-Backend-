@@ -151,7 +151,7 @@ def winning_numbers(request):
     return Response(data)
 
 #==================================================
-# Admin View
+# Admin View // Total Tickets + Revenue
 # Accepts GET request from verified admin
 # Returns total tickets sold and total revenue
 #==================================================
@@ -173,3 +173,22 @@ def admin_view(request):
         'total_tickets_sold': total_tickets_sold,
         'total_revenue': str(total_revenue)})
 
+#==================================================
+# Admin View // Add ticket type
+# Accepts POST request from verified admin
+# and details of ticket to be added
+#==================================================
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+
+def admin_add_ticket(request):
+    if not request.user.is_staff:                   
+        return Response({'error': 'Admin access only.'}, status=status.HTTP_403_FORBIDDEN)
+    
+    game_type = request.data.get("game_type")
+    ticket_price = request.data.get("ticket_price")
+    prize_amount = request.data.get("prize_amount")
+
+    LotteryTicket.objects.create(game_type=game_type, ticket_price=ticket_price, prize_amount=prize_amount)
+
+    return Response({'message': 'Ticket added successfully!'}, status=status.HTTP_201_CREATED)
