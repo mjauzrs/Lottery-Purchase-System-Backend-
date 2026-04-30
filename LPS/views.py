@@ -7,6 +7,7 @@ from rest_framework import status   #returns full HTTP status code
 from .models import LotteryTicket, Order, ElectronicTicket, LotteryDraw, CustomerProfile 
 from .forms import CustomerRegistrationForm
 from .random_gen import generate_random_numbers
+from datetime import date
 
 #==================================================
 # Register View
@@ -92,6 +93,16 @@ def purchase_tickets(request):
     if not tickets or len(tickets)>10:              #validate ticket/ ticket count
         return Response({'error': 'Maximum 10 tickets allowed per purchase'}, status=status.HTTP_400_BAD_REQUEST)
     
+    for ticket in tickets:                          #check if draws exist
+        lottery_type= ticket.get('lottery_type')
+        draw= LotteryDraw.objects.filter(
+            game__game_type=lottery_type,
+            draw_status=LotteryDraw.DrawStatus.SCHEDULED,
+            draw_date__gte=date.today()
+        ).first()
+        if not draw:
+            return Response({'error': f'No upcoming draw found for {lottery_type}'}, status=status.HTTP_400_BAD_REQUEST)
+
     order = Order.objects.create(user=request.user, payment_method=payment_method)  #create order
 
     for ticket in tickets:
